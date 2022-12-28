@@ -21,7 +21,7 @@ export class UserService {
       return res.id;
     } catch (error) {
       console.dir(error);
-      return 'error';
+      return;
     }
   }
 

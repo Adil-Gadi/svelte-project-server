@@ -8,7 +8,7 @@ import { UserService } from './user.service';
 import { LocalStrategy } from 'src/auth/local.strategy';
 import { JwtService } from '@nestjs/jwt';
 
-@Resolver((of) => User)
+@Resolver(of => User)
 export class UserResolver {
   constructor(
     private readonly userService: UserService,
@@ -16,17 +16,16 @@ export class UserResolver {
     private readonly jwtService: JwtService,
   ) {}
 
-  @Query((returns) => User, { name: 'user' })
-  async getUser(@Args('id', { type: () => Int }) id: number) {
+  @Query(returns => User, { name: 'user' })
+  async getUserById(@Args('id', { type: () => Int }) id: number) {
     return {
       id: 4,
       email: 'hello@hello.com',
       username: 'abcd',
-      password: 'hashed',
     };
   }
 
-  @Mutation((returns) => String)
+  @Mutation(returns => String)
   async signUp(
     @Args({ name: 'email', type: () => String }) email: string,
     @Args({ name: 'password', type: () => String }) password: string,
@@ -39,19 +38,25 @@ export class UserResolver {
       username,
       hashedPassword,
     );
-    return id;
+
+    if (id) {
+      return this.jwtService.sign(id);
+    } else {
+      return 'failed';
+    }
   }
 
-  @Query((returns) => String)
+  @Query(returns => String)
   async login(
     @Args({ name: 'email', type: () => String }) email: string,
     @Args({ name: 'password', type: () => String }) password: string,
   ) {
     const result = await this.localStrategy.validate(email, password);
+    console.log('result', result);
     if (result) {
-      return this.jwtService.sign('hello');
+      return this.jwtService.sign(result);
     } else {
-      return '';
+      return 'failed';
     }
   }
 }
