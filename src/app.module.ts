@@ -4,7 +4,8 @@ config();
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './models/user/user.module';
+import { UserModule } from './models/users/user.module';
+import { PostsModule } from './models/posts/post.module';
 
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -19,6 +20,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     }),
     MongooseModule.forRoot(process.env.MONGO_URL),
     UserModule,
+    PostsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

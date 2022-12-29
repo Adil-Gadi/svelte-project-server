@@ -11,17 +11,28 @@ export class UserService {
     email: string,
     username: string,
     password: string,
-  ): Promise<string> {
+  ): Promise<{ ok: boolean; value: string }> {
     const createdUser = new this.userModel();
     createdUser.email = email;
     createdUser.username = username;
     createdUser.password = password;
     try {
       const res = await createdUser.save();
-      return res.id;
+      return {
+        ok: true,
+        value: res.id,
+      };
     } catch (error) {
-      console.dir(error);
-      return;
+      if (error.code === 11000) {
+        if (error.keyPattern.email === 1) {
+          return { ok: false, value: 'Email is already taken.' };
+        }
+
+        if (error.keyPattern.username === 1) {
+          return { ok: false, value: 'Username is already taken.' };
+        }
+      }
+      return { ok: false, value: '' };
     }
   }
 

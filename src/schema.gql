@@ -8,11 +8,25 @@ type User {
   username: String!
 }
 
+type AuthenticationError {
+  ok: Boolean!
+  value: String!
+}
+
+type PostError {
+  ok: Boolean!
+  value: String!
+}
+
 type Query {
   user(id: Int!): User!
-  login(email: String!, password: String!): String!
+  login(email: String!, password: String!): AuthenticationError!
 }
 
 type Mutation {
-  signUp(email: String!, password: String!, username: String!): String!
+  signUp(email: String!, password: String!, username: String!): AuthenticationError!
+  createPost(title: String!, content: String!): PostError!
+  editPost(title: String!, content: String!, postId: String!): PostError!
+  likePost(postId: String!): Boolean!
+  unlikePost(postId: String!): Boolean!
 }

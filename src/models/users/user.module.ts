@@ -6,7 +6,7 @@ import { UserResolver } from './user.resolver';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './user.schema';
 import { UserService } from './user.service';
-import { LocalStrategy } from '../../auth/local.strategy';
+import { JwtStrategy } from '../../auth/jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
@@ -23,7 +23,8 @@ import { PassportModule } from '@nestjs/passport';
       },
     ]),
   ],
-  providers: [UserService, LocalStrategy, UserResolver],
+  providers: [UserService, JwtStrategy, UserResolver],
+  exports: [MongooseModule],
 })
 export class UserModule {}
 

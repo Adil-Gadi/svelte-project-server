@@ -4,15 +4,16 @@ config();
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { hash } from 'bcrypt';
 import { User } from './user.model';
+import { AuthenticationError } from './authenticationError.model';
 import { UserService } from './user.service';
-import { LocalStrategy } from 'src/auth/local.strategy';
+import { JwtStrategy } from 'src/auth/jwt.strategy';
 import { JwtService } from '@nestjs/jwt';
 
 @Resolver(of => User)
 export class UserResolver {
   constructor(
     private readonly userService: UserService,
-    private readonly localStrategy: LocalStrategy,
+    private readonly jwtStrategy: JwtStrategy,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -25,7 +26,7 @@ export class UserResolver {
     };
   }
 
-  @Mutation(returns => String)
+  @Mutation(returns => AuthenticationError)
   async signUp(
     @Args({ name: 'email', type: () => String }) email: string,
     @Args({ name: 'password', type: () => String }) password: string,
@@ -39,24 +40,22 @@ export class UserResolver {
       hashedPassword,
     );
 
-    if (id) {
-      return this.jwtService.sign(id);
+    if (id.ok) {
+      return { ok: true, value: this.jwtService.sign(id) };
     } else {
-      return 'failed';
+      return { ok: false, value: id.value };
     }
   }
 
-  @Query(returns => String)
+  @Query(returns => AuthenticationError)
   async login(
     @Args({ name: 'email', type: () => String }) email: string,
     @Args({ name: 'password', type: () => String }) password: string,
   ) {
-    const result = await this.localStrategy.validate(email, password);
-    console.log('result', result);
-    if (result) {
-      return this.jwtService.sign(result);
-    } else {
-      return 'failed';
-    }
+    const result = await this.jwtStrategy.login(email, password);
+    return {
+      ok: result.ok,
+      value: result.value,
+    };
   }
 }
