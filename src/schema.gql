@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 
 type User {
-  id: Int!
+  id: String!
   email: String!
   username: String!
 }
@@ -13,20 +13,45 @@ type AuthenticationError {
   value: String!
 }
 
+type Post {
+  id: String!
+  title: String!
+  content: String!
+  edited: Boolean!
+  createdAt: String!
+  author: String!
+  isAuthor: Boolean!
+  likes: Int!
+  hasLiked: Boolean!
+}
+
 type PostError {
   ok: Boolean!
   value: String!
 }
 
 type Query {
-  user(id: Int!): User!
+  getUser(id: String!): GetUserResponse!
   login(email: String!, password: String!): AuthenticationError!
+  getLatestPosts(items: Int!, step: Int!): [Post!]!
+}
+
+union GetUserResponse = GetUserSuccess | GetUserError
+
+type GetUserSuccess {
+  ok: Boolean!
+  value: User!
+}
+
+type GetUserError {
+  ok: Boolean!
+  value: String!
 }
 
 type Mutation {
   signUp(email: String!, password: String!, username: String!): AuthenticationError!
   createPost(title: String!, content: String!): PostError!
   editPost(title: String!, content: String!, postId: String!): PostError!
-  likePost(postId: String!): Boolean!
-  unlikePost(postId: String!): Boolean!
+  likePost(postId: String!): Int!
+  unlikePost(postId: String!): Int!
 }

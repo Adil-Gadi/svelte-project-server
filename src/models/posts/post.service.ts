@@ -23,7 +23,7 @@ export class PostService {
     const author = await this.findAuthor(authorId);
 
     if (author) {
-      post.author = author;
+      post.author = author.id;
 
       try {
         const result = await post.save();
@@ -46,10 +46,15 @@ export class PostService {
     }
   }
 
-  async editPost(title: string, content: string, postId: string) {
+  async editPost(
+    title: string,
+    content: string,
+    postId: string,
+    userId: string,
+  ) {
     const post = await this.postModel.findById(postId);
 
-    if (post) {
+    if (post && this.isAuthor(userId, post)) {
       post.title = title;
       post.content = content;
       post.edited = true;
@@ -76,19 +81,16 @@ export class PostService {
     }
   }
 
-  async isAuthor(userId: string, postId: string): Promise<boolean> {
-    const result = await this.postModel.findById(postId);
-
-    if (result) {
-      if (result.authorId.toString() === userId) {
-        return true;
-      }
+  private async isAuthor(userId: string, post: Post): Promise<boolean> {
+    if (post.author.toString() === userId) {
+      console.log(true);
+      return true;
     }
 
     return false;
   }
 
-  async likePost(userId: string, postId: string): Promise<boolean> {
+  async likePost(userId: string, postId: string): Promise<number> {
     const post = await this.postModel.findById(postId);
 
     const likesSet = new Set(post.likes);
@@ -100,26 +102,34 @@ export class PostService {
     try {
       await post.save();
 
-      return true;
+      return post.likes.length;
     } catch (error) {
-      return false;
+      return -1;
     }
   }
 
-  async unlikePost(userId: string, postId: string): Promise<boolean> {
+  async unlikePost(userId: string, postId: string): Promise<number> {
     const post = await this.postModel.findById(postId);
 
     if (post) {
-      post.likes.filter(id => id !== userId);
+      post.likes = post.likes.filter(id => id !== userId);
 
       try {
-        await post.update();
-        return true;
-      } catch (error) {
-        return false;
-      }
+        await post.save();
+        return post.likes.length;
+      } catch (error) {}
     }
 
-    return false;
+    return -1;
+  }
+
+  async getLatestPosts(limit: number, step: number) {
+    const posts = await this.postModel
+      .find()
+      .sort({ createdAt: 1 })
+      .skip(step * limit)
+      .limit(limit);
+
+    return posts;
   }
 }

@@ -43,5 +43,17 @@ export class UserService {
       return user;
     } else return undefined;
   }
+
+  async findUserById(id: string) {
+    try {
+      const result = await this.userModel.findById(id);
+
+      if (result) {
+        return { ok: true, value: result };
+      }
+    } catch (error) {}
+
+    return { ok: false, value: undefined };
+  }
 }
 

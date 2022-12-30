@@ -1,13 +1,20 @@
 import { config } from 'dotenv';
 config();
 
-import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { hash } from 'bcrypt';
 import { User } from './user.model';
 import { AuthenticationError } from './authenticationError.model';
 import { UserService } from './user.service';
 import { JwtStrategy } from 'src/auth/jwt.strategy';
 import { JwtService } from '@nestjs/jwt';
+import { UseGuards } from '@nestjs/common';
+import { CurrentUser, GqlAuthGuard } from '@auth/jwt.guard';
+import {
+  GetUserError,
+  GetUserResponse,
+  GetUserSuccess,
+} from './getUserError.model';
 
 @Resolver(of => User)
 export class UserResolver {
@@ -17,13 +24,31 @@ export class UserResolver {
     private readonly jwtService: JwtService,
   ) {}
 
-  @Query(returns => User, { name: 'user' })
-  async getUserById(@Args('id', { type: () => Int }) id: number) {
-    return {
-      id: 4,
-      email: 'hello@hello.com',
-      username: 'abcd',
-    };
+  @Query(returns => GetUserResponse)
+  @UseGuards(GqlAuthGuard)
+  async getUser(
+    @CurrentUser() userId: string,
+    @Args('id', { type: () => String }) id: string,
+  ) {
+    const result = await this.userService.findUserById(id);
+
+    if (result.ok) {
+      const { value: user } = result;
+
+      const success = new GetUserSuccess();
+      success.ok = true;
+      success.value = {
+        id: user.id,
+        email: id === userId ? user.email : '',
+        username: user.username,
+      };
+      return success;
+    }
+
+    const error = new GetUserError();
+    error.ok = false;
+    error.value = 'User Not Found';
+    return error;
   }
 
   @Mutation(returns => AuthenticationError)

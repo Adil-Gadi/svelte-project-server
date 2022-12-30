@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Mongoose, Schema as MongooseSchema } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { User } from '@users/user.schema';
 
 export type PostDocument = HydratedDocument<Post>;
@@ -23,8 +23,8 @@ export class Post {
   })
   likes: string[];
 
-  @Prop({ required: true })
-  authorId: MongooseSchema.Types.ObjectId;
+  @Prop()
+  createdAt: MongooseSchema.Types.Date;
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

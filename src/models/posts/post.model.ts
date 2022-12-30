@@ -2,8 +2,8 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
 export class Post {
-  @Field(type => Int)
-  id: number;
+  @Field()
+  id: string;
 
   @Field()
   title: string;
@@ -27,5 +27,5 @@ export class Post {
   likes: number;
 
   @Field()
-  hasLikes: boolean;
+  hasLiked: boolean;
 }

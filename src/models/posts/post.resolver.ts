@@ -32,20 +32,21 @@ export class PostResolver {
     @Args({ name: 'content', type: () => String }) content: string,
     @Args({ name: 'postId', type: () => String }) postId: string,
   ) {
-    const isAuthor = await this.postService.isAuthor(userId, postId);
+    const result = await this.postService.editPost(
+      title,
+      content,
+      postId,
+      userId,
+    );
 
-    if (isAuthor) {
-      const result = await this.postService.editPost(title, content, postId);
-
-      if (result.ok) {
-        return { ok: true, value: '' };
-      }
+    if (result.ok) {
+      return { ok: true, value: '' };
     }
 
     return { ok: false, value: '' };
   }
 
-  @Mutation(returns => Boolean)
+  @Mutation(returns => Int)
   @UseGuards(GqlAuthGuard)
   async likePost(
     @CurrentUser() userId: string,
@@ -54,7 +55,7 @@ export class PostResolver {
     return await this.postService.likePost(userId, postId);
   }
 
-  @Mutation(returns => Boolean)
+  @Mutation(returns => Int)
   @UseGuards(GqlAuthGuard)
   async unlikePost(
     @CurrentUser() userId: string,
@@ -63,11 +64,35 @@ export class PostResolver {
     return await this.postService.unlikePost(userId, postId);
   }
 
-  //   @Query(returns => [Post])
-  //   @UseGuards(GqlAuthGuard)
-  //   async posts(
-  //     @CurrentUser() userId: string,
-  //     @Args({ name: 'items', type: () => Int }) items: number,
-  //     @Args({ name: 'step', type: () => Int }) step: number,
-  //   ) {}
+  @Query(returns => [Post], { name: 'getLatestPosts' })
+  @UseGuards(GqlAuthGuard)
+  async posts(
+    @CurrentUser() userId: string,
+    @Args({ name: 'items', type: () => Int }) items: number,
+    @Args({ name: 'step', type: () => Int }) step: number,
+  ) {
+    const latestPosts = await this.postService.getLatestPosts(items, step);
+
+    return await Promise.all(
+      latestPosts.map(async post => {
+        const isAuthor = userId === post.author.toString();
+
+        await post.populate('author');
+
+        return {
+          id: post.id.toString(),
+          title: post.title,
+          content: post.content,
+          edited: post.edited,
+          createdAt: new Intl.DateTimeFormat('en-us', {
+            dateStyle: 'short',
+          }).format(),
+          author: post.author.username,
+          isAuthor,
+          likes: post.likes.length,
+          hasLiked: post.likes.includes(userId),
+        };
+      }),
+    );
+  }
 }
