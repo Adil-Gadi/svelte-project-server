@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Post, PostDocument } from './post.schema';
 import { User, UserDocument } from '@users/user.schema';
 
@@ -33,6 +33,7 @@ export class PostService {
           value: result.id,
         };
       } catch (error) {
+        console.log(error);
         return {
           ok: false,
           value: '',
@@ -52,21 +53,23 @@ export class PostService {
     postId: string,
     userId: string,
   ) {
-    const post = await this.postModel.findById(postId);
+    try {
+      const post = await this.postModel.findById(postId);
 
-    if (post && this.isAuthor(userId, post)) {
-      post.title = title;
-      post.content = content;
-      post.edited = true;
+      if (post && this.isAuthor(userId, post)) {
+        post.title = title;
+        post.content = content;
+        post.edited = true;
 
-      try {
-        await post.save();
+        try {
+          await post.save();
 
-        return { ok: true, value: '' };
-      } catch (error) {
-        return { ok: false, value: '' };
+          return { ok: true, value: '' };
+        } catch (error) {
+          return { ok: false, value: '' };
+        }
       }
-    }
+    } catch (error) {}
 
     return { ok: false, value: '' };
   }
@@ -123,13 +126,35 @@ export class PostService {
     return -1;
   }
 
-  async getLatestPosts(limit: number, step: number) {
+  async getLatestPosts(limit: number, step: number, since: number) {
     const posts = await this.postModel
-      .find()
-      .sort({ createdAt: 1 })
+      .find({
+        createdAt: {
+          $lt: new Date(since),
+        },
+      })
+      .sort({ createdAt: -1 })
       .skip(step * limit)
-      .limit(limit);
+      .limit(limit + 1);
 
     return posts;
+  }
+
+  async getPost(postId: string): Promise<any> {
+    try {
+      const post = await this.postModel.findById(postId);
+
+      if (post) {
+        return {
+          ok: true,
+          value: post,
+        };
+      }
+    } catch (error) {}
+
+    return {
+      ok: false,
+      value: 'Post not Found',
+    };
   }
 }

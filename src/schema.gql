@@ -30,10 +30,21 @@ type PostError {
   value: String!
 }
 
+type GetPostSuccess {
+  ok: Boolean!
+  value: Post!
+}
+
+type GetLatestPost {
+  posts: [Post!]!
+  next: Boolean!
+}
+
 type Query {
   getUser(id: String!): GetUserResponse!
   login(email: String!, password: String!): AuthenticationError!
-  getLatestPosts(items: Int!, step: Int!): [Post!]!
+  getLatestPosts(items: Int!, step: Int!, since: String!): GetLatestPost!
+  getPost(postId: String!): GetPostSuccess!
 }
 
 union GetUserResponse = GetUserSuccess | GetUserError

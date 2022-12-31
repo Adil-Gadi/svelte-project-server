@@ -7,6 +7,7 @@ import { PostService } from './post.service';
 import { UseGuards } from '@nestjs/common';
 import { CurrentUser, GqlAuthGuard } from '@auth/jwt.guard';
 import { PostError } from './postError.model';
+import { GetLatestPost, GetPostSuccess } from './gqlTypes.model';
 
 @Resolver(of => Post)
 export class PostResolver {
@@ -64,16 +65,21 @@ export class PostResolver {
     return await this.postService.unlikePost(userId, postId);
   }
 
-  @Query(returns => [Post], { name: 'getLatestPosts' })
+  @Query(returns => GetLatestPost, { name: 'getLatestPosts' })
   @UseGuards(GqlAuthGuard)
-  async posts(
+  async getLatestPosts(
     @CurrentUser() userId: string,
     @Args({ name: 'items', type: () => Int }) items: number,
     @Args({ name: 'step', type: () => Int }) step: number,
-  ) {
-    const latestPosts = await this.postService.getLatestPosts(items, step);
+    @Args({ name: 'since', type: () => String }) since: string,
+  ): Promise<GetLatestPost> {
+    const latestPosts = await this.postService.getLatestPosts(
+      items,
+      step,
+      Number(since),
+    );
 
-    return await Promise.all(
+    const posts = await Promise.all(
       latestPosts.map(async post => {
         const isAuthor = userId === post.author.toString();
 
@@ -94,5 +100,52 @@ export class PostResolver {
         };
       }),
     );
+
+    const next = latestPosts.length > items;
+
+    if (next) {
+      posts.pop();
+    }
+
+    return {
+      next,
+      posts,
+    };
+  }
+
+  @Query(returns => GetPostSuccess)
+  @UseGuards(GqlAuthGuard)
+  async getPost(
+    @CurrentUser() userId: string,
+    @Args({ name: 'postId', type: () => String }) postId: string,
+  ) {
+    const { ok, value: post } = await this.postService.getPost(postId);
+    if (ok) {
+      const isAuthor = userId === post.author.toString();
+
+      await post.populate('author');
+
+      return {
+        ok: true,
+        value: {
+          id: post.id.toString(),
+          title: post.title,
+          content: post.content,
+          edited: post.edited,
+          createdAt: new Intl.DateTimeFormat('en-us', {
+            dateStyle: 'short',
+          }).format(),
+          author: post.author.username,
+          isAuthor,
+          likes: post.likes.length,
+          hasLiked: post.likes.includes(userId),
+        },
+      };
+    }
+
+    return {
+      ok: false,
+      value: '',
+    };
   }
 }

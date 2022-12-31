@@ -66,7 +66,7 @@ export class UserResolver {
     );
 
     if (id.ok) {
-      return { ok: true, value: this.jwtService.sign(id) };
+      return { ok: true, value: this.jwtService.sign(id.value) };
     } else {
       return { ok: false, value: id.value };
     }
