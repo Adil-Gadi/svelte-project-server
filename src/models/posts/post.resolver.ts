@@ -47,6 +47,15 @@ export class PostResolver {
     return { ok: false, value: '' };
   }
 
+  @Mutation(returns => Boolean)
+  @UseGuards(GqlAuthGuard)
+  async deletePost(
+    @CurrentUser() userId: string,
+    @Args({ name: 'postId', type: () => String }) postId: string,
+  ) {
+    return await this.postService.deletePost(postId, userId);
+  }
+
   @Mutation(returns => Int)
   @UseGuards(GqlAuthGuard)
   async likePost(

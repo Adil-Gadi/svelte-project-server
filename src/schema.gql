@@ -63,6 +63,7 @@ type Mutation {
   signUp(email: String!, password: String!, username: String!): AuthenticationError!
   createPost(title: String!, content: String!): PostError!
   editPost(title: String!, content: String!, postId: String!): PostError!
+  deletePost(postId: String!): Boolean!
   likePost(postId: String!): Int!
   unlikePost(postId: String!): Int!
 }

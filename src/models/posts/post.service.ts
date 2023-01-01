@@ -86,7 +86,6 @@ export class PostService {
 
   private async isAuthor(userId: string, post: Post): Promise<boolean> {
     if (post.author.toString() === userId) {
-      console.log(true);
       return true;
     }
 
@@ -156,5 +155,22 @@ export class PostService {
       ok: false,
       value: 'Post not Found',
     };
+  }
+
+  async deletePost(postId: string, userId: string): Promise<boolean> {
+    try {
+      const post = await this.postModel.findById(postId);
+
+      const res = await this.isAuthor(userId, post);
+
+      if (res) {
+        try {
+          const res = await this.postModel.findByIdAndDelete(postId);
+          return true;
+        } catch (error) {}
+      }
+    } catch (error) {}
+
+    return false;
   }
 }
