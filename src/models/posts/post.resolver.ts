@@ -94,6 +94,8 @@ export class PostResolver {
 
         await post.populate('author');
 
+        const date = new Date(String(post.createdAt));
+
         return {
           id: post.id.toString(),
           title: post.title,
@@ -101,7 +103,8 @@ export class PostResolver {
           edited: post.edited,
           createdAt: new Intl.DateTimeFormat('en-us', {
             dateStyle: 'short',
-          }).format(),
+          }).format(date),
+          // createdAt: new Date(post.createdAt),
           author: post.author.username,
           isAuthor,
           likes: post.likes.length,
